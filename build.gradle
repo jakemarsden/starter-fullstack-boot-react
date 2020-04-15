@@ -1,36 +1,104 @@
 plugins {
-	id 'org.springframework.boot' version '2.2.6.RELEASE'
-	id 'io.spring.dependency-management' version '1.0.9.RELEASE'
-	id 'java'
+  id 'io.spring.dependency-management' version '1.0.9.RELEASE' apply false
+  id 'org.springframework.boot' version '2.2.6.RELEASE' apply false
 }
 
-group = 'com.jakemarsden.starter-fullstack-boot-react'
-version = '0.0.1-SNAPSHOT'
-sourceCompatibility = '11'
-
-configurations {
-	developmentOnly
-	runtimeClasspath {
-		extendsFrom developmentOnly
-	}
-	compileOnly {
-		extendsFrom annotationProcessor
-	}
+allprojects {
+  group 'com.jakemarsden.starter-fullstack-boot-react'
+  version '0.0.1-SNAPSHOT'
 }
 
-repositories {
-	mavenCentral()
+subprojects {
+  repositories {
+    jcenter()
+  }
 }
 
-dependencies {
-	implementation 'org.springframework.boot:spring-boot-starter-web'
-	developmentOnly 'org.springframework.boot:spring-boot-devtools'
-	annotationProcessor 'org.springframework.boot:spring-boot-configuration-processor'
-	testImplementation('org.springframework.boot:spring-boot-starter-test') {
-		exclude group: 'org.junit.vintage', module: 'junit-vintage-engine'
-	}
-}
+project('server') {
+  apply plugin: 'io.spring.dependency-management'
+  apply plugin: 'org.springframework.boot'
+  apply plugin: 'application'
+  apply plugin: 'java'
 
-test {
-	useJUnitPlatform()
+  configurations {
+    developmentOnly
+
+    compileOnly {
+      extendsFrom annotationProcessor
+    }
+
+    runtimeClasspath {
+      extendsFrom developmentOnly
+    }
+  }
+
+  dependencyManagement {
+    dependencies {
+      dependency group: 'org.apache.commons', name: 'commons-lang3', version: '3.10'
+    }
+  }
+
+  dependencies {
+    implementation group: 'org.apache.commons', name: 'commons-lang3'
+    implementation group: 'org.springframework.boot', name: 'spring-boot-starter-web'
+    testImplementation(group: 'org.springframework.boot', name: 'spring-boot-starter-test') {
+      exclude group: 'org.junit.vintage', module: 'junit-vintage-engine'
+    }
+
+    annotationProcessor group: 'org.springframework.boot', name: 'spring-boot-configuration-processor'
+    developmentOnly group: 'org.springframework.boot', name: 'spring-boot-devtools'
+  }
+
+  springBoot {
+    buildInfo {
+      properties {
+        // omit for build performance and repeatability
+        time = null
+      }
+    }
+  }
+
+  bootRun {
+    // load static resources directly from source locations during development
+    sourceResources sourceSets.main
+  }
+
+  application {
+    mainClassName 'com.jakemarsden.starterfullstackbootreact.server.Application'
+  }
+
+  java {
+    sourceCompatibility JavaVersion.VERSION_11
+    targetCompatibility JavaVersion.VERSION_11
+  }
+
+  test {
+    useJUnitPlatform()
+  }
+
+  tasks.withType(JavaCompile) {
+    options.compilerArgs += [
+        '-parameters',
+        '-Werror',
+        '-Xlint:all',
+        '-Xlint:-processing'
+    ]
+    options.encoding 'UTF-8'
+  }
+
+  task processJavadocResources(type: Copy) {
+    // Work-around for missing Javadoc 'doc-files' directories
+    // see: https://github.com/gradle/gradle/issues/4046
+    group tasks.javadoc.group
+    from('src/main/java') {
+      into "$buildDir/docs/javadoc"
+      include '**/doc-files/*'
+    }
+  }
+
+  javadoc {
+    // Replaces `options.docFilesSubDirs true`
+    finalizedBy tasks.processJavadocResources
+    options.encoding 'UTF-8'
+  }
 }
