@@ -1,5 +1,7 @@
 # starter-fullstack-boot-react
 
+[![CI](https://github.com/jakemarsden/starter-fullstack-boot-react/workflows/CI/badge.svg)](https://github.com/jakemarsden/starter-fullstack-boot-react/actions?query=workflow%3ACI)
+
 Starter template with a [Spring Boot](https://spring.io/projects/spring-boot) server written in
 [Java](https://docs.oracle.com/en/java/javase/11/) and a [React](https://reactjs.org/) client
 written in [TypeScript](https://www.typescriptlang.org/). [Gradle](https://gradle.org/) is used to
