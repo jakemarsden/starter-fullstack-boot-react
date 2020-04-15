@@ -1,6 +1,7 @@
 import com.jakemarsden.githooksgradleplugin.GitHooksPlugin
 
 plugins {
+  id 'com.github.node-gradle.node' version '2.2.3' apply false
   id 'com.github.sherter.google-java-format' version '0.8' apply false
   id 'io.spring.dependency-management' version '1.0.9.RELEASE' apply false
   id 'org.springframework.boot' version '2.2.6.RELEASE' apply false
@@ -120,5 +121,56 @@ project('server') {
     // Alias
     group tasks.googleJavaFormat.group
     dependsOn tasks.googleJavaFormat
+  }
+}
+
+project('webclient') {
+  apply plugin: 'com.github.node-gradle.node'
+  apply plugin: 'base'
+
+  node {
+    download true
+    npmVersion '6.14.4'
+    version '12.16.2'
+  }
+
+  npm_run_start {
+    shouldRunAfter tasks.npm_run_build
+    shouldRunAfter tasks.npm_run_test
+  }
+
+  npm_run_build {
+    shouldRunAfter tasks.npm_run_test
+    inputs.files fileTree('public')
+    inputs.files fileTree('src')
+    inputs.files file('package.json')
+    inputs.files file('package-lock.json')
+    inputs.files file('tsconfig.json')
+    outputs.dir 'build'
+  }
+
+  npm_run_test {
+    inputs.files fileTree('src')
+    inputs.files file('package.json')
+    inputs.files file('package-lock.json')
+    inputs.files file('tsconfig.json')
+    // Only re-run when inputs change even though there are no outputs
+    outputs.upToDateWhen { true }
+
+    // Tell Jest to exit after running tests rather than entering watch mode
+    environment CI: true
+  }
+
+  assemble {
+    dependsOn tasks.npm_run_build
+  }
+
+  task test {
+    group tasks.check.group
+    dependsOn tasks.npm_run_test
+  }
+
+  check {
+    dependsOn tasks.test
   }
 }
