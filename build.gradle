@@ -50,6 +50,8 @@ project('server') {
   }
 
   dependencies {
+    runtimeOnly project(':webclient')
+
     implementation group: 'org.apache.commons', name: 'commons-lang3'
     implementation group: 'org.springframework.boot', name: 'spring-boot-starter-web'
     testImplementation(group: 'org.springframework.boot', name: 'spring-boot-starter-test') {
@@ -128,6 +130,31 @@ project('webclient') {
   apply plugin: 'com.github.node-gradle.node'
   apply plugin: 'base'
 
+  // Output directory used by `react-scripts` (i.e. `npm run build`) can't be easily configured to
+  // be inside Gradle's build directory, and since they clash, Gradle needs to use a different
+  // location
+  def nodeBuildDir = 'build'
+  project.buildDir = 'build-gradle'
+
+  configurations {
+    runtimeElements {
+      // Attributes matching the `runtimeElements` configuration of a Java library, as if this
+      // project had the `java-library` plugin applied. This means other JVM projects will select
+      // this configuration when depending on this project.
+      // see: https://docs.gradle.org/current/userguide/cross_project_publications.html#sec:variant-aware-sharing
+      canBeConsumed true
+      canBeResolved false
+      attributes {
+        def targetJvmVersion = JavaVersion.VERSION_1_1.majorVersion
+        attribute Category.CATEGORY_ATTRIBUTE, objects.named(Category, Category.LIBRARY)
+        attribute Bundling.BUNDLING_ATTRIBUTE, objects.named(Bundling, Bundling.EXTERNAL)
+        attribute TargetJvmVersion.TARGET_JVM_VERSION_ATTRIBUTE, targetJvmVersion.toInteger()
+        attribute LibraryElements.LIBRARY_ELEMENTS_ATTRIBUTE, objects.named(LibraryElements, 'jar')
+        attribute Usage.USAGE_ATTRIBUTE, objects.named(Usage, Usage.JAVA_RUNTIME)
+      }
+    }
+  }
+
   node {
     download true
     npmVersion '6.14.4'
@@ -146,7 +173,7 @@ project('webclient') {
     inputs.files file('package.json')
     inputs.files file('package-lock.json')
     inputs.files file('tsconfig.json')
-    outputs.dir 'build'
+    outputs.dir nodeBuildDir
   }
 
   npm_run_test {
@@ -161,8 +188,11 @@ project('webclient') {
     environment CI: true
   }
 
-  assemble {
+  task jar(type: Jar) {
     dependsOn tasks.npm_run_build
+    from(nodeBuildDir) {
+      into 'static'
+    }
   }
 
   task test {
@@ -172,5 +202,13 @@ project('webclient') {
 
   check {
     dependsOn tasks.test
+  }
+
+  clean {
+    dependsOn tasks.cleanNpm_run_build
+  }
+
+  artifacts {
+    runtimeElements tasks.jar
   }
 }
