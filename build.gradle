@@ -1,6 +1,15 @@
+import com.jakemarsden.githooksgradleplugin.GitHooksPlugin
+
 plugins {
+  id 'com.github.sherter.google-java-format' version '0.8' apply false
   id 'io.spring.dependency-management' version '1.0.9.RELEASE' apply false
   id 'org.springframework.boot' version '2.2.6.RELEASE' apply false
+}
+
+apply plugin: GitHooksPlugin
+
+gitHooks {
+  hooks.put 'pre-commit', 'check'
 }
 
 allprojects {
@@ -15,6 +24,7 @@ subprojects {
 }
 
 project('server') {
+  apply plugin: 'com.github.sherter.google-java-format'
   apply plugin: 'io.spring.dependency-management'
   apply plugin: 'org.springframework.boot'
   apply plugin: 'application'
@@ -100,5 +110,15 @@ project('server') {
     // Replaces `options.docFilesSubDirs true`
     finalizedBy tasks.processJavadocResources
     options.encoding 'UTF-8'
+  }
+
+  googleJavaFormat {
+    toolVersion '1.7'
+  }
+
+  task format {
+    // Alias
+    group tasks.googleJavaFormat.group
+    dependsOn tasks.googleJavaFormat
   }
 }
