@@ -124,6 +124,12 @@ project('server') {
     group tasks.googleJavaFormat.group
     dependsOn tasks.googleJavaFormat
   }
+
+  task verifyFormat {
+    // Alias
+    group tasks.verifyGoogleJavaFormat.group
+    dependsOn tasks.verifyGoogleJavaFormat
+  }
 }
 
 project('webclient') {
@@ -161,33 +167,6 @@ project('webclient') {
     version '12.16.2'
   }
 
-  npm_run_start {
-    shouldRunAfter tasks.npm_run_build
-    shouldRunAfter tasks.npm_run_test
-  }
-
-  npm_run_build {
-    shouldRunAfter tasks.npm_run_test
-    inputs.files fileTree('public')
-    inputs.files fileTree('src')
-    inputs.files file('package.json')
-    inputs.files file('package-lock.json')
-    inputs.files file('tsconfig.json')
-    outputs.dir nodeBuildDir
-  }
-
-  npm_run_test {
-    inputs.files fileTree('src')
-    inputs.files file('package.json')
-    inputs.files file('package-lock.json')
-    inputs.files file('tsconfig.json')
-    // Only re-run when inputs change even though there are no outputs
-    outputs.upToDateWhen { true }
-
-    // Tell Jest to exit after running tests rather than entering watch mode
-    environment CI: true
-  }
-
   task jar(type: Jar) {
     dependsOn tasks.npm_run_build
     from(nodeBuildDir) {
@@ -200,12 +179,76 @@ project('webclient') {
     dependsOn tasks.npm_run_test
   }
 
+  task format {
+    dependsOn tasks.npm_run_prettierWrite
+  }
+
+  task verifyFormat {
+    dependsOn tasks.npm_run_prettierCheck
+  }
+
   check {
     dependsOn tasks.test
+    dependsOn tasks.verifyFormat
   }
 
   clean {
     dependsOn tasks.cleanNpm_run_build
+  }
+
+  npm_run_prettierCheck {
+    mustRunAfter tasks.npm_run_prettierWrite
+    inputs.files fileTree('public')
+    inputs.files fileTree('src')
+    inputs.files file('.prettierignore')
+    inputs.files file('.prettierrc.json')
+    inputs.files file('package.json')
+    inputs.files file('package-lock.json')
+    inputs.files file('tsconfig.json')
+    outputs.upToDateWhen { true }
+  }
+
+  npm_run_prettierWrite {
+    inputs.files fileTree('public')
+    inputs.files fileTree('src')
+    inputs.files file('.prettierignore')
+    inputs.files file('.prettierrc.json')
+    inputs.files file('package.json')
+    inputs.files file('package-lock.json')
+    inputs.files file('tsconfig.json')
+    outputs.upToDateWhen { true }
+  }
+
+  npm_run_build {
+    mustRunAfter tasks.npm_run_prettierWrite
+    shouldRunAfter tasks.npm_run_prettierCheck
+    shouldRunAfter tasks.npm_run_test
+    inputs.files fileTree('public')
+    inputs.files fileTree('src')
+    inputs.files file('package.json')
+    inputs.files file('package-lock.json')
+    inputs.files file('tsconfig.json')
+    outputs.dir nodeBuildDir
+  }
+
+  npm_run_start {
+    mustRunAfter tasks.npm_run_prettierWrite
+    shouldRunAfter tasks.npm_run_prettierCheck
+    shouldRunAfter tasks.npm_run_build
+    shouldRunAfter tasks.npm_run_test
+  }
+
+  npm_run_test {
+    mustRunAfter tasks.npm_run_prettierWrite
+    shouldRunAfter tasks.npm_run_prettierCheck
+    inputs.files fileTree('src')
+    inputs.files file('package.json')
+    inputs.files file('package-lock.json')
+    inputs.files file('tsconfig.json')
+    outputs.upToDateWhen { true }
+
+    // Tell Jest to exit after running tests rather than entering watch mode
+    environment CI: true
   }
 
   artifacts {

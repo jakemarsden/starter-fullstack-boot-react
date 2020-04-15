@@ -1,5 +1,12 @@
 {
   "private": true,
+  "scripts": {
+    "build": "react-scripts build",
+    "prettierCheck": "prettier --check .",
+    "prettierWrite": "prettier --write .",
+    "start": "react-scripts start",
+    "test": "react-scripts test"
+  },
   "dependencies": {
     "@testing-library/jest-dom": "^4.2.4",
     "@testing-library/react": "^9.5.0",
@@ -8,18 +15,13 @@
     "@types/node": "^12.12.35",
     "@types/react": "^16.9.34",
     "@types/react-dom": "^16.9.6",
+    "prettier": "2.0.4",
+    "prettier-plugin-organize-imports": "1.0.3",
+    "prettier-plugin-package": "1.0.0",
     "react": "^16.13.1",
     "react-dom": "^16.13.1",
     "react-scripts": "3.4.1",
     "typescript": "^3.7.5"
-  },
-  "scripts": {
-    "start": "react-scripts start",
-    "build": "react-scripts build",
-    "test": "react-scripts test"
-  },
-  "eslintConfig": {
-    "extends": "react-app"
   },
   "browserslist": {
     "production": [
@@ -32,5 +34,8 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
+  },
+  "eslintConfig": {
+    "extends": "react-app"
   }
 }
